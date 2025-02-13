@@ -12,8 +12,6 @@ Users will have these attributes:
     <li>Username: an unique string username for the account</li>
     <li>associated email: an unique string email for the account</li>
     <li>password: A string that is used to acess the account</li>
-    <li>Notifications: A list of Notifications objects of notifications.</li>
-    <li>Privacity: A boolean attribute that defines if the profile is private</li>
     <li>Following List: A list/dict with Users that the User follows</li>
     <li>Followers List: A list/dict with Users that follows the User</li>
 </ul>
