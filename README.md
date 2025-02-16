@@ -19,18 +19,15 @@ O projeto foi estruturado de forma modular, dividindo o código em:
 - **tests**: Suíte de testes automatizados utilizando pytest para validar as funcionalidades.
 
 ---
-
-## Tutorial de Como Executar
-
 ### Requisitos
 
 - Python 3.7 ou superior.
-- [pytest](https://docs.pytest.org/) (opcional, para executar os testes).
 
-Para instalar o pytest, execute:
-```bash
-pip install pytest 
-```
+## Tutorial de Como Executar
+- vá ao diretório principal do arquivo
+- rode main.py
+- divirta-se
+
 
 # Descrição das Classes
 
