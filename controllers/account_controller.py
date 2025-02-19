@@ -1,4 +1,4 @@
-# controllers/account_controller.py
+    # controllers/account_controller.py
 from models.user import User
 from storage import users, posts
 
@@ -66,3 +66,8 @@ def delete_account(user):
         posts.remove(post)
     user.deleteAccount()
     print("Conta desativada com sucesso!")
+
+def show_users(my_user):
+    for user in users:
+        if user != my_user:
+            print(user)

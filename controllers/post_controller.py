@@ -71,7 +71,7 @@ def delete_post(user):
     else:
         print("Você não tem permissão para deletar este post ou ele não existe.")
 
-def list_all_posts(user):
+def see_all_posts(user):
     if not posts:
         print("Nenhum post disponível.")
         return
