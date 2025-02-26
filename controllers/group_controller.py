@@ -1,13 +1,15 @@
 # controllers/group_controller.py
 from models.group import Group
 from storage import groups, users
-
+from create_controller import creator
+create_group_messages = {
+    "name": "Digite o nome do grupo: ",
+    "description": "Digite a descrição do grupo: "
+}
 def create_group(user):
-    name = input("Digite o nome do grupo: ")
-    description = input("Digite a descrição do grupo: ")
-    group = Group(name, description, user)
-    groups.append(group)
-    print(f"Grupo '{name}' criado com sucesso!")
+    new_group = creator("Group")
+    groups.append(new_group)
+    print(f"Grupo '{new_group.getName()}' criado com sucesso!")
     return group
 
 def list_groups():

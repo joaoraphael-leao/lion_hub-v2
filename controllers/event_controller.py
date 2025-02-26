@@ -1,9 +1,14 @@
 # controllers/event_controller.py
 from models.event import Event
 from storage import events, users
-
+create_messages = {
+    "event_name": "Digite o nome do evento: ",
+    "event_date": "Digite a data do evento (ex: 2025-02-01): ",
+    "event_location": "Digite o local do evento: ",
+    "event_description": "Digite a descrição do evento: "
+}
 def create_event(user):
-    event_name = input("Digite o nome do evento: ")
+    event_name = create_name()
     event_date = input("Digite a data do evento (ex: 2025-02-01): ")
     event_location = input("Digite o local do evento: ")
     event_description = input("Digite a descrição do evento: ")

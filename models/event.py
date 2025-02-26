@@ -13,7 +13,7 @@ class Event:
         storage.event_id_counter += 1
 
     def __str__(self):
-        return (f"Evento: {self._event_name}\n"
+        return (f"Evento {self._id}: {self._event_name}\n"
                 f"    Data: {self._event_date}\n"
                 f"    Local: {self._event_location}\n"
                 f"    Descrição: {self._event_description}")
