@@ -1,6 +1,10 @@
-import flask
+from flask import Flask, render_template
 
-app = flask.Flask(__name__)
+app = Flask(__name__, static_folder="static", template_folder="../../../frontend")
 
-@app.route("/carregmaento")
-def carregmaento():
+@app.route("/carregamento")
+def carregamento():
+    return render_template("/src/routes/login.svelte")
+
+if __name__ == "__main__":
+    app.run(debug=True)
