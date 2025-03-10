@@ -1,8 +1,8 @@
 import jwt
 import datetime
 from flask import Blueprint, request, jsonify
-from models.user import User
-from database import get_db_connection
+from app.models.user import User
+from app.database import get_db_connection
 from werkzeug.security import check_password_hash
 
 auth_bp = Blueprint("auth", __name__)

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from database import get_db_connection
+from app.database import get_db_connection
 
 class BaseModel(ABC):
     __tabela = None  # Definido nas subclasses
@@ -14,6 +14,23 @@ class BaseModel(ABC):
     @id.setter
     def id(self, value):
         self._id = value
+
+    @classmethod
+    def buscar_por_id(cls, objeto_id):
+        """Busca um objeto pelo ID no banco de dados"""
+        if cls.get_tabela() is None:
+            raise ValueError(f"A classe filha deve definir a variável '__tabela'\nClasse: {cls.__name__}\ntabela: {cls.__tabela}")
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute(f"SELECT * FROM {cls.get_tabela()} WHERE id = %s", (objeto_id,))
+        resultado = cur.fetchone()
+
+        cur.close()
+        conn.close()
+
+        return resultado
 
     @abstractmethod
     def salvar_no_banco(self):

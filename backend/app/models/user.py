@@ -1,5 +1,5 @@
-from models.base_model import BaseModel
-from database import get_db_connection
+from app.models.basemodel import BaseModel
+from app.database import get_db_connection
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(BaseModel):
@@ -12,6 +12,9 @@ class User(BaseModel):
         self.__email = email
         self.__senha_hash = self._gerar_hash_senha(senha) if senha else None
 
+    @staticmethod 
+    def get_tabela():
+        return User.__tabela
     @property
     def nome(self):
         return self.__nome
@@ -31,8 +34,8 @@ class User(BaseModel):
         cur = conn.cursor()
 
         cur.execute("""
-            INSERT INTO users (nome, email, senha_hash) 
-            VALUES (%s, %s, %s) RETURNING id;
+            INSERT INTO users (nome, email, senha, privacidade) 
+            VALUES (%s, %s, %s, true) RETURNING id;
         """, [self.nome, self.email, self.__senha_hash])
 
         self.id = cur.fetchone()[0]

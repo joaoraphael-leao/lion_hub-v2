@@ -1,12 +1,12 @@
 from flask import Blueprint, request, jsonify
-from models.user import User
-from models.post import Post
-from models.comment import Comment
-from models.like import Like
-from models.message import Message
-from models.notification import Notification
-from models.community import Group, Event
-from models.follow_control import FollowControl
+from app.models.user import User
+from app.models.post import Post
+from app.models.comment import Comment
+from app.models.like import Like
+from app.models.message import Message
+from app.models.notification import Notification
+from app.models.community import Group, Event
+from app.models.follow_control import FollowControl
 
 crud_bp = Blueprint("crud", __name__)
 
@@ -43,7 +43,7 @@ def criar_objeto(objeto):
 def buscar_objeto(objeto, id):
     """Busca um objeto no banco de dados pelo ID."""
     if objeto not in MODELS:
-        return jsonify({"erro": "Tipo de objeto inválido!"}), 400
+        return jsonify({"erro": f"Tipo de objeto inválido!"}), 400
 
     ModelClass = MODELS[objeto]  # Obtém a classe do modelo correspondente
     try:

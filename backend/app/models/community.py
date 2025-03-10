@@ -1,4 +1,4 @@
-from models.base_model import BaseModel
+from app.models.basemodel import BaseModel
 from abc import ABC, abstractmethod
 
 class CommunityEntity(BaseModel, ABC):

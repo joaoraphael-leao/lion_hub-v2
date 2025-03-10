@@ -1,5 +1,5 @@
-from models.base_model import BaseModel
-from database import get_db_connection
+from app.models.basemodel import BaseModel
+from app.database import get_db_connection
 
 class Comment(BaseModel):
     __tabela = "comments"

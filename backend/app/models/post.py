@@ -1,5 +1,5 @@
-from models.base_model import BaseModel
-from database import get_db_connection
+from app.models.basemodel import BaseModel
+from app.database import get_db_connection
 
 class Post(BaseModel):
     __tabela = "posts"
@@ -61,25 +61,25 @@ class Post(BaseModel):
             self.atualizar_dados(**dados)
 
     def exibir_info(self):
-    conn = get_db_connection()
-    cur = conn.cursor()
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-    cur.execute("""
-        SELECT nome FROM users WHERE id = %s;
-    """, [self.autor_id])  
+        cur.execute("""
+            SELECT nome FROM users WHERE id = %s;
+        """, [self.autor_id])  
 
-    autor = cur.fetchone()
+        autor = cur.fetchone()
 
-    cur.close()
-    conn.close()
+        cur.close()
+        conn.close()
 
-    if autor:
-        return {
-            "post_id": self.id,
-            "autor": autor[0],
-            "titulo": self.titulo,
-            "descricao": self.descricao,
-            "midia": self.midia
-        }
-    else:
-        return None
+        if autor:
+            return {
+                "post_id": self.id,
+                "autor": autor[0],
+                "titulo": self.titulo,
+                "descricao": self.descricao,
+                "midia": self.midia
+            }
+        else:
+            return None
