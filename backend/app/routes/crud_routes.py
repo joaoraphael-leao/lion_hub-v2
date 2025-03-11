@@ -47,7 +47,7 @@ def buscar_objeto(objeto, id):
 
     ModelClass = MODELS[objeto]  # Obtém a classe do modelo correspondente
     try:
-        objeto_encontrado = ModelClass.buscar_por_id(id)  # Método genérico de busca no Model
+        objeto_encontrado = ModelClass.buscar_por_id(cls=ModelClass, objeto_id=id)  # Método genérico de busca no Model
         if not objeto_encontrado:
             return jsonify({"erro": f"{objeto.capitalize()} não encontrado!"}), 404
 
