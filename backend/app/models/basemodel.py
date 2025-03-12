@@ -9,10 +9,6 @@ class BaseModel(ABC):
     def id(self):
         return self._id
 
-    @id.setter
-    def id(self, value):
-        self._id = value
-
     @classmethod
     def buscar_por_id(cls, objeto_id, tabela):
         """Busca um objeto pelo ID e retorna um dicionário com os dados"""
