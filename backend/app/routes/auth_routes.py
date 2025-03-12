@@ -10,6 +10,39 @@ SECRET_KEY = "minha_chave_secreta"  # 🔐 Trocar por uma chave segura
 
 revoked_tokens = set()  # 🔹 Lista de tokens revogados
 
+@auth_bp.route("/auth/register", methods=["POST"])
+def registrar_usuario():
+    """Registra um novo usuário no sistema, garantindo que nome e email sejam únicos"""
+    dados = request.json
+    nome = dados.get("nome")
+    email = dados.get("email")
+    senha = dados.get("senha")
+
+    if not nome or not email or not senha:
+        return jsonify({"erro": "Todos os campos (nome, email e senha) são obrigatórios"}), 400
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # 🔹 Verifica se o nome ou o e-mail já estão cadastrados
+    cur.execute("SELECT id FROM users WHERE email = %s OR nome = %s", (email, nome))
+    if cur.fetchone():
+        cur.close()
+        conn.close()
+        return jsonify({"erro": "Nome ou e-mail já cadastrados"}), 400
+
+    # 🔹 Hash da senha antes de salvar
+    senha_hash = generate_password_hash(senha)
+
+    cur.execute("INSERT INTO users (nome, email, senha) VALUES (%s, %s, %s) RETURNING id",
+                (nome, email, senha_hash))
+    usuario_id = cur.fetchone()[0]
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"mensagem": "Usuário cadastrado com sucesso!", "id": usuario_id}), 201
 # 🔹 Rota de Login
 @auth_bp.route("/login", methods=["POST"])
 def login():

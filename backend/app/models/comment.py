@@ -2,7 +2,6 @@ from app.models.basemodel import BaseModel
 from app.database import get_db_connection
 
 class Comment(BaseModel):
-    __tabela = "comments"
 
     def __init__(self, post_id, autor_id, conteudo, id=None):
         super().__init__()
@@ -14,6 +13,8 @@ class Comment(BaseModel):
     @property
     def post_id(self):
         return self.__post_id
+        
+
 
     @property
     def autor_id(self):

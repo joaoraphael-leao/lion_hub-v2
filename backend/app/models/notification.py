@@ -2,39 +2,75 @@ from app.models.basemodel import BaseModel
 from app.database import get_db_connection
 
 class Notification(BaseModel):
-    __tabela = "notifications"  # Define a tabela correspondente no banco
+    __tabela = "notifications"
 
-    def __init__(self, usuario_id, tipo, objeto_id, lida=False):
+    def __init__(self, usuario_id, tipo, objeto_id, lida=False, id=None):
         super().__init__()
-        self.usuario_id = usuario_id  # Quem recebe a notificação
-        self.tipo = tipo  # Exemplo: 'like', 'comment', 'follow', 'message'
-        self.objeto_id = objeto_id  # ID do post, comentário ou seguidor relacionado
-        self.lida = lida  # Estado da notificação (True/False)
+        self._id = id
+        self.__usuario_id = usuario_id
+        self.__tipo = tipo  # Exemplo: "like", "comment", "follow"
+        self.__objeto_id = objeto_id  # O ID do post/comentário/evento relacionado
+        self.__lida = lida  # True ou False
+
+    @staticmethod
+    def get_tabela():
+        return Notification.__tabela
 
     def salvar_no_banco(self):
-        """Salva a notificação no banco de dados"""
+        """Salva uma nova notificação no banco de dados"""
         conn = get_db_connection()
         cur = conn.cursor()
 
-        cur.execute(
-            "INSERT INTO notifications (usuario_id, tipo, objeto_id, lida) VALUES (%s, %s, %s, %s) RETURNING id",
-            (self.usuario_id, self.tipo, self.objeto_id, self.lida),
-        )
-        self.id = cur.fetchone()[0]  # Obtém o ID gerado pelo banco
+        cur.execute(f"""
+            INSERT INTO {self.__tabela} (usuario_id, tipo, objeto_id, lida) 
+            VALUES (%s, %s, %s, %s) RETURNING id;
+        """, [self.__usuario_id, self.__tipo, self.__objeto_id, self.__lida])
+
+        self.id = cur.fetchone()[0]
         conn.commit()
         cur.close()
         conn.close()
 
     def marcar_como_lida(self):
         """Marca a notificação como lida"""
-        self.atualizar_dados(lida=True)
+        if not self.id:
+            raise ValueError("A notificação precisa ter um ID para ser atualizada.")
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute(f"""
+            UPDATE {self.__tabela} 
+            SET lida = TRUE 
+            WHERE id = %s;
+        """, [self.id])
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+    def deletar_do_banco(self):
+        """Remove a notificação do banco de dados"""
+        if not self.id:
+            raise ValueError("A notificação precisa ter um ID para ser deletada.")
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute(f"""
+            DELETE FROM {self.__tabela} WHERE id = %s;
+        """, [self.id])
+
+        conn.commit()
+        cur.close()
+        conn.close()
 
     def exibir_info(self):
-        """Retorna um dicionário com os detalhes da notificação"""
+        """Exibe as informações da notificação"""
         return {
             "id": self.id,
-            "usuario_id": self.usuario_id,
-            "tipo": self.tipo,
-            "objeto_id": self.objeto_id,
-            "lida": self.lida,
+            "usuario_id": self.__usuario_id,
+            "tipo": self.__tipo,
+            "objeto_id": self.__objeto_id,
+            "lida": self.__lida
         }

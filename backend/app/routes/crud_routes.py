@@ -7,6 +7,7 @@ from app.models.message import Message
 from app.models.notification import Notification
 from app.models.community import Group, Event
 from app.models.follow_control import FollowControl
+from app.security.permission_manager import verificar_autenticacao
 
 crud_bp = Blueprint("crud", __name__)
 
@@ -19,41 +20,71 @@ MODELS = {
     "notification": Notification,
     "group": Group,
     "event": Event,
-    "follow": FollowControl
 }
+TABLES = {
+    "user": "users",
+    "post": "posts",
+    "comment": "comments",
+    "like": "likes",
+    "message": "messages",
+    "follow": "followers",
+    "follow_request": "follow_requests",
+    "group": "groups",
+    "event": "events",
+    "notification": "notifications"
+}
+from flask import Blueprint, request, jsonify
+from app.models import MODELS
+from app.security.permission_manager import verificar_autenticacao
+
+crud_bp = Blueprint("crud", __name__)
 
 @crud_bp.route("/create/<objeto>", methods=["POST"])
 def criar_objeto(objeto):
-    """Cria um novo objeto no banco de dados, baseado no tipo informado na URL."""
+    """Criação de objetos no banco de dados, garantindo segurança e permissões"""
+
+    # 🔹 **Valida o token do usuário**
+    usuario_id, erro = verificar_autenticacao(request)
+    if erro:
+        return erro  # Retorna erro 401 se não estiver autenticado
+
     if objeto not in MODELS:
         return jsonify({"erro": "Tipo de objeto inválido!"}), 400
 
-    data = request.json  # Recebe os dados enviados na requisição
-    ModelClass = MODELS[objeto]  # Pega a classe correta do dicionário MODELS
+    data = request.json  # Dados enviados pelo cliente
+    ModelClass = MODELS[objeto]  # Obtém a classe do modelo correspondente
 
     try:
-        novo_obj = ModelClass(**data)  # Cria a instância do objeto
-        novo_obj.salvar_no_banco()  # Salva no banco de dados
-        return jsonify({"mensagem": f"{objeto.capitalize()} criado com sucesso!", "id": novo_obj.id}), 201
+        # 🔹 **VERIFICAÇÃO DE REGRAS ESPECÍFICAS POR TIPO DE OBJETO** 🔹
+        if objeto = "user":
+            return jsonify({"erro": "Criação de usuários não permitida por este endpoint"}), 403
+        else:
+            data["user_id"] = usuario_id
+
+       
+
+        # 🔹 **Cria o objeto no banco** 🔹
+        novo_objeto = ModelClass(**data)
+        novo_objeto.salvar_no_banco()
+
+        return jsonify({"mensagem": f"{objeto.capitalize()} criado com sucesso!", "id": novo_objeto.id}), 201
+
     except Exception as e:
         return jsonify({"erro": f"Erro ao criar {objeto}: {str(e)}"}), 500
 
      
-@crud_bp.route("/get/<objeto>/<id>", methods=["GET"])
-def buscar_objeto(objeto, id):
-    """Busca um objeto no banco de dados pelo ID."""
+@crud_bp.route("/get/<objeto>/<int:objeto_id>", methods=["GET"])
+def get_objeto(objeto, objeto_id):
     if objeto not in MODELS:
-        return jsonify({"erro": f"Tipo de objeto inválido!"}), 400
+        return jsonify({"erro": "Objeto inválido"}), 400
 
-    ModelClass = MODELS[objeto]  # Obtém a classe do modelo correspondente
-    try:
-        objeto_encontrado = ModelClass.buscar_por_id(cls=ModelClass, objeto_id=id)  # Método genérico de busca no Model
-        if not objeto_encontrado:
-            return jsonify({"erro": f"{objeto.capitalize()} não encontrado!"}), 404
+    ModelClass = MODELS[objeto]  # Obtém a classe correta
+    objeto_encontrado = ModelClass.buscar_por_id(objeto_id)  
 
-        return jsonify(objeto_encontrado.exibir_info()), 200
-    except Exception as e:
-        return jsonify({"erro": f"Erro ao buscar {objeto}: {str(e)}"}), 500
+    if not objeto_encontrado:
+        return jsonify({"erro": f"{objeto.capitalize()} não encontrado!"}), 404
+
+    return jsonify(objeto_encontrado), 200  
 
 
 @crud_bp.route("/edit/<objeto>/<id>", methods=["PUT"])
@@ -66,7 +97,7 @@ def editar_objeto(objeto, id):
     ModelClass = MODELS[objeto]  # Obtém a classe do modelo correspondente
 
     try:
-        objeto_encontrado = ModelClass.buscar_por_id(id)  # Busca o objeto no banco
+        objeto_encontrado = ModelClass.buscar_por_id(cls=ModelClass, objeto_id=id)  # Busca o objeto no banco
         if not objeto_encontrado:
             return jsonify({"erro": f"{objeto.capitalize()} não encontrado!"}), 404
 

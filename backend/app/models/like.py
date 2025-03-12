@@ -22,7 +22,7 @@ class Like(BaseModel):
     @property
     def post_id(self):
         return self.__post_id
-
+        
     def salvar_no_banco(self):
         """Salva a curtida no banco de dados."""
         conn = get_db_connection()

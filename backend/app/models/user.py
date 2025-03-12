@@ -12,9 +12,6 @@ class User(BaseModel):
         self.__email = email
         self.__senha_hash = self._gerar_hash_senha(senha) if senha else None
 
-    @staticmethod 
-    def get_tabela():
-        return User.__tabela
     @property
     def nome(self):
         return self.__nome
@@ -32,6 +29,15 @@ class User(BaseModel):
     def verificar_senha(self, senha):
         return check_password_hash(self.__senha_hash, senha)
 
+    @classmethod
+    def buscar_por_id(cls, objeto_id):
+        """Busca um usuário no banco e retorna um dicionário sem expor a senha."""
+        usuario = super().buscar_por_id(objeto_id, cls.__tabela)
+
+        if usuario:
+            del usuario["senha_hash"]  # Removemos a senha para segurança
+        return usuario
+
     def salvar_no_banco(self):
         conn = get_db_connection()
         cur = conn.cursor()
@@ -45,22 +51,6 @@ class User(BaseModel):
         conn.commit()
         cur.close()
         conn.close()
-    
-    @staticmethod
-    def buscar_por_id(cls, objeto_id):
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        cur.execute(f"SELECT nome, email, senha, id FROM {cls.__tabela} WHERE id = %s;", [objeto_id])
-        dados = cur.fetchone()
-
-        cur.close()
-        conn.close()
-
-        if dados:
-            print(dados)
-            return cls(*dados)
-        return None
         
     def atualizar_usuario(self, nome=None, senha=None):
         dados = {}

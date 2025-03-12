@@ -3,8 +3,6 @@ from abc import ABC, abstractmethod
 
 class CommunityEntity(BaseModel, ABC):
     """Classe base para Group e Event."""
-    __tabela = None  # Definido nas subclasses
-
     def __init__(self, owner_id, nome, descricao, privacidade=True, id=None):
         super().__init__()
         self._id = id
@@ -47,7 +45,6 @@ class CommunityEntity(BaseModel, ABC):
 
 class Group(CommunityEntity):
     """Representa um grupo na rede social."""
-    __tabela = "groups"
 
     def __init__(self, owner_id, nome, descricao, privacidade=True, id=None):
         super().__init__(owner_id, nome, descricao, privacidade, id)
@@ -65,7 +62,6 @@ class Group(CommunityEntity):
 
 class Event(CommunityEntity):
     """Representa um evento na rede social."""
-    __tabela = "events"
 
     def __init__(self, owner_id, nome, descricao, data, localizacao, privacidade=True, id=None):
         super().__init__(owner_id, nome, descricao, privacidade, id)

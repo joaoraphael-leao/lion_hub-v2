@@ -15,7 +15,7 @@ class Message(BaseModel):
     @property
     def remetente_id(self):
         return self.__remetente_id
-
+        
     @property
     def destinatario_id(self):
         return self.__destinatario_id
