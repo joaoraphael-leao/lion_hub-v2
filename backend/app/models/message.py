@@ -4,13 +4,13 @@ from app.database import get_db_connection
 class Message(BaseModel):
     __tabela = "messages"
 
-    def __init__(self, remetente_id, destinatario_id, conteudo, id=None, lida=False):
+    def __init__(self, remetente_id, destinatario_id, conteudo, id=None):
         super().__init__()
         self._id = id
         self.__remetente_id = remetente_id
         self.__destinatario_id = destinatario_id
         self.__conteudo = conteudo
-        self.__lida = lida
+
 
     @property
     def remetente_id(self):
@@ -24,36 +24,39 @@ class Message(BaseModel):
     def conteudo(self):
         return self.__conteudo
 
-    @property
-    def lida(self):
-        return self.__lida
-
     def salvar_no_banco(self):
-        """Salva a mensagem no banco de dados."""
         conn = get_db_connection()
         cur = conn.cursor()
 
         cur.execute("""
-            INSERT INTO messages (remetente_id, destinatario_id, conteudo, lida)
-            VALUES (%s, %s, %s, %s) RETURNING id;
-        """, [self.remetente_id, self.destinatario_id, self.conteudo, self.lida])
-
-        self.id = cur.fetchone()[0]
+            INSERT INTO messages (remetente_id, destinatario_id, conteudo)
+            VALUES (%s, %s, %s) RETURNING id;
+        """, [self.remetente_id, self.destinatario_id, self.conteudo])
+        
+        result = cur.fetchone()
+        if result:
+            self.id = result[0]
+        else:
+            raise Exception("Erro ao inserir mensagem no banco: nenhum ID retornado.")
+        
         conn.commit()
         cur.close()
         conn.close()
 
     @staticmethod
-    def buscar_historico(remetente_id, destinatario_id):
-        """Retorna todas as mensagens trocadas entre dois usuários."""
+    def buscar_historico(remetente_id, destinatario_id, usuario_id):
+        """Retorna todas as mensagens entre dois usuários, validando permissões."""
+        if usuario_id not in [remetente_id, destinatario_id]:
+            return {"erro": "Você não tem permissão para ver essas mensagens."}
+
         conn = get_db_connection()
         cur = conn.cursor()
 
         cur.execute("""
-            SELECT id, remetente_id, destinatario_id, conteudo, lida, data_criacao
+            SELECT id, remetente_id, destinatario_id, conteudo, data_criacao
             FROM messages
             WHERE (remetente_id = %s AND destinatario_id = %s)
-               OR (remetente_id = %s AND destinatario_id = %s)
+            OR (remetente_id = %s AND destinatario_id = %s)
             ORDER BY data_criacao ASC;
         """, [remetente_id, destinatario_id, destinatario_id, remetente_id])
 
@@ -67,26 +70,10 @@ class Message(BaseModel):
                 "remetente_id": msg[1],
                 "destinatario_id": msg[2],
                 "conteudo": msg[3],
-                "lida": msg[4],
-                "data_criacao": msg[5]
+                "data_criacao": msg[4]
             }
             for msg in mensagens
         ]
-
-    @staticmethod
-    def marcar_como_lida(mensagem_id):
-        """Marca uma mensagem como lida."""
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        cur.execute("""
-            UPDATE messages SET lida = TRUE WHERE id = %s;
-        """, [mensagem_id])
-        conn.commit()
-
-        cur.close()
-        conn.close()
-        return {"mensagem": "Mensagem marcada como lida."}
 
     @staticmethod
     def deletar_mensagem(mensagem_id, usuario_id):
@@ -110,5 +97,4 @@ class Message(BaseModel):
             "remetente_id": self.remetente_id,
             "destinatario_id": self.destinatario_id,
             "conteudo": self.conteudo,
-            "lida": self.lida
         }

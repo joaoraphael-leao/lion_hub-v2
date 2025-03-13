@@ -2,67 +2,72 @@ from abc import ABC, abstractmethod
 from app.database import get_db_connection
 
 class BaseModel(ABC):
+    __tabela = None
     def __init__(self):
         self._id = None  # Será definido pelo banco
         
     @property
     def id(self):
         return self._id
+    
+    @id.setter
+    def id(self, id):
+        self._id = id
 
     @classmethod
     def buscar_por_id(cls, objeto_id, tabela):
         """Busca um objeto pelo ID e retorna um dicionário com os dados"""
-        if not tabela:
-            raise ValueError(f"Tabela {tabela} não definida")
-
         conn = get_db_connection()
         cur = conn.cursor()
 
         cur.execute(f"SELECT * FROM {tabela} WHERE id = %s;", [objeto_id])
         dados = cur.fetchone()
 
-        cur.close()
-        conn.close()
-
         if dados:
             colunas = [desc[0] for desc in cur.description]  # Pegamos os nomes das colunas
-            return dict(zip(colunas, dados))  # Criamos um dicionário com {coluna: valor}
+            resultado = dict(zip(colunas, dados))  # Criamos um dicionário com {coluna: valor}
+            cur.close()
+            conn.close()
+            return resultado
         
+        cur.close()
+        conn.close()
         return None
 
     @abstractmethod
     def salvar_no_banco(self):
         raise NotImplementedError("Cada subclasse precisa implementar salvar_no_banco()")
 
-    def atualizar_dados(classe, **dados):
-        if not classe.id:
+    def atualizar_dados(self,tabela,  **dados):
+        if not self.id:
             raise ValueError("Objeto precisa ter um ID definido para atualizar.")
-        if not classe.get_tabela:
-            raise ValueError("Classe filha precisa definir o nome da tabela.")
-
+        
         conn = get_db_connection()
         cur = conn.cursor()
 
         campos = ', '.join(f"{campo} = %s" for campo in dados)
-        valores = list(dados.values()) + [classe._id]
+        valores = list(dados.values()) + [self.id]
 
-        query = f"UPDATE {classe.get_tabela()} SET {campos} WHERE id = %s"
+        query = (f"UPDATE {tabela} SET {campos} WHERE id = %s")
         cur.execute(query, valores)
 
         conn.commit()
         cur.close()
         conn.close()
 
-    def deletar_do_banco(self):
+    def deletar_do_banco(self, tabela):
+        if not self.id:
+            raise ValueError("O objeto precisa ter um ID definido para ser deletado.")
+
         conn = get_db_connection()
         cur = conn.cursor()
 
-        cur.execute(f"DELETE FROM {self.__tabela} WHERE id = %s", (self._id,))
+        cur.execute(f"DELETE FROM {tabela} WHERE id = %s", (self.id,))
         conn.commit()
 
         cur.close()
         conn.close()
-    
+
     @abstractmethod
     def exibir_info(self):
         raise NotImplementedError("Cada subclasse precisa implementar exibir_info()")

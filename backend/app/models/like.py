@@ -24,28 +24,37 @@ class Like(BaseModel):
         return self.__post_id
         
     def salvar_no_banco(self):
-        """Salva a curtida no banco de dados."""
+        """Salva a curtida no banco de dados se ainda não existir."""
         conn = get_db_connection()
         cur = conn.cursor()
 
-        try:
-            cur.execute("""
-                INSERT INTO likes (usuario_id, post_id)
-                VALUES (%s, %s) ON CONFLICT DO NOTHING RETURNING id;
-            """, [self.usuario_id, self.post_id])
+        cur.execute("""
+            SELECT id FROM likes WHERE usuario_id = %s AND post_id = %s;
+        """, [self.usuario_id, self.post_id])
+        resultado = cur.fetchone()
 
-            resultado = cur.fetchone()
-            if resultado:
-                self.id = resultado[0]
-                conn.commit()
-                return {"mensagem": "Curtida registrada com sucesso."}
-            else:
-                return {"erro": "Você já curtiu este post."}
-        except Exception as e:
-            return {"erro": str(e)}
-        finally:
-            cur.close()
-            conn.close()
+        if resultado:
+            return {"erro": "Você já curtiu este post."}  # 🔹 Impede curtidas repetidas
+
+        cur.execute("""
+            INSERT INTO likes (usuario_id, post_id)
+            VALUES (%s, %s) RETURNING id;
+        """, [self.usuario_id, self.post_id])
+
+        self.id = cur.fetchone()[0]
+        conn.commit()
+
+        # 🔹 Buscar o dono do post para enviar notificação correta
+        cur.execute("SELECT user_id FROM posts WHERE id = %s", [self.post_id])
+        dono_post = cur.fetchone()
+
+        if dono_post:
+            Notification.criar_notificacao(dono_post[0], "like", self.post_id)
+
+        cur.close()
+        conn.close()
+        return {"mensagem": "Curtida registrada com sucesso."}
+
 
     @staticmethod
     def descurtir(usuario_id, post_id):
@@ -54,7 +63,7 @@ class Like(BaseModel):
         cur = conn.cursor()
 
         cur.execute("""
-            DELETE FROM likes WHERE usuario_id = %s AND post_id = %s;
+            DELETE FROM likes WHERE user_id = %s AND post_id = %s;
         """, [usuario_id, post_id])
         conn.commit()
 
@@ -69,7 +78,7 @@ class Like(BaseModel):
         cur = conn.cursor()
 
         cur.execute("""
-            SELECT 1 FROM likes WHERE usuario_id = %s AND post_id = %s;
+            SELECT 1 FROM likes WHERE user_id = %s AND post_id = %s;
         """, [usuario_id, post_id])
         resultado = cur.fetchone()
 

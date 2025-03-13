@@ -65,6 +65,23 @@ class Notification(BaseModel):
         cur.close()
         conn.close()
 
+    @staticmethod
+    def buscar_notificacoes(usuario_id):
+        """Retorna todas as notificações não lidas de um usuário"""
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT id, tipo, objeto_id, lida FROM notifications 
+            WHERE usuario_id = %s ORDER BY id DESC;
+        """, [usuario_id])
+
+        notificacoes = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        return [{"id": n[0], "tipo": n[1], "objeto_id": n[2], "lida": n[3]} for n in notificacoes]
+
     def exibir_info(self):
         """Exibe as informações da notificação"""
         return {
@@ -74,3 +91,10 @@ class Notification(BaseModel):
             "objeto_id": self.__objeto_id,
             "lida": self.__lida
         }
+
+    @staticmethod
+    def criar_notificacao(usuario_id, tipo, objeto_id):
+        """Cria uma nova notificação"""
+        notificacao = Notification(usuario_id, tipo, objeto_id)
+        notificacao.salvar_no_banco()
+        return notificacao

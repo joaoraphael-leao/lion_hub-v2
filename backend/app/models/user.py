@@ -1,16 +1,15 @@
 from app.models.basemodel import BaseModel
 from app.database import get_db_connection
-from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(BaseModel):
-    __tabela = "users"
 
     def __init__(self, nome, email, senha, id=None):
         super().__init__()
         self._id = id
         self.__nome = nome
         self.__email = email
-        self.__senha_hash = self._gerar_hash_senha(senha) if senha else None
+        self.__senha = senha  # Armazenando a senha em texto plano
+        __tabela = "users"
 
     @property
     def nome(self):
@@ -19,24 +18,42 @@ class User(BaseModel):
     @property
     def email(self):
         return self.__email
+
     @property
-    def privacidade(self):
-        return self.__privacidade
+    def senha(self):
+        return self.__senha
 
-    def _gerar_hash_senha(self, senha):
-        return generate_password_hash(senha)
+    def tornar_privado(self):
+        """Altera o perfil para privado e atualiza no banco de dados."""
+        self.__privacidade = False
+        self.atualizar_dados("users", privacidade=False)
 
+    def tornar_publico(self):
+        """Altera o perfil para público e atualiza no banco de dados."""
+        self.__privacidade = True
+        self.atualizar_dados("users", privacidade=True)
+        c
     def verificar_senha(self, senha):
-        return check_password_hash(self.__senha_hash, senha)
+        # Comparação direta de senhas em texto plano
+        return senha == self.__senha
 
     @classmethod
-    def buscar_por_id(cls, objeto_id):
-        """Busca um usuário no banco e retorna um dicionário sem expor a senha."""
-        usuario = super().buscar_por_id(objeto_id, cls.__tabela)
+    def buscar_por_email(cls, email):
+        """Busca um usuário pelo e-mail."""
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-        if usuario:
-            del usuario["senha_hash"]  # Removemos a senha para segurança
-        return usuario
+        cur.execute("SELECT id, nome, email, senha FROM users WHERE email = %s;", [email])
+        dados = cur.fetchone()
+
+        cur.close()
+        conn.close()
+
+        if dados:
+            # Criando o objeto User com a senha em texto plano
+            usuario = cls(dados[1], dados[2], dados[3], id=dados[0])
+            return usuario
+        return None
 
     def salvar_no_banco(self):
         conn = get_db_connection()
@@ -44,25 +61,24 @@ class User(BaseModel):
 
         cur.execute("""
             INSERT INTO users (nome, email, senha, privacidade) 
-            VALUES (%s, %s, %s, "True") RETURNING id;
-        """, [self.nome, self.email, self.__senha_hash])
+            VALUES (%s, %s, %s, True) RETURNING id;
+        """, [self.nome, self.email, self.__senha])  # Salvando a senha em texto plano
 
         self.id = cur.fetchone()[0]
         conn.commit()
         cur.close()
         conn.close()
-        
+
     def atualizar_usuario(self, nome=None, senha=None):
         dados = {}
         if nome:
             dados["nome"] = nome
             self.__nome = nome
         if senha:
-            senha_hash = self._gerar_hash_senha(senha)
-            dados["senha_hash"] = senha_hash
-            self.__senha_hash = senha_hash
+            dados["senha"] = senha  # Atualizando a senha em texto plano
+            self.__senha = senha
         if dados:
-            self.atualizar_dados(**dados)
+            self.atualizar_dados("users", **dados)
 
     def exibir_info(self):
         conn = get_db_connection()

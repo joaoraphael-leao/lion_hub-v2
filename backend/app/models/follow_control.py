@@ -14,7 +14,7 @@ class FollowControl:
         cur.execute("SELECT privacidade FROM users WHERE id = %s", [seguido_id])
         resultado = cur.fetchone()
 
-        if resultado and resultado[0]:  # 🔹 Se privacidade == True (perfil privado)
+        if resultado and resultado[0]:
             return FollowControl.pedir_para_seguir(seguidor_id, seguido_id)
 
         try:
@@ -24,6 +24,8 @@ class FollowControl:
                 ON CONFLICT (seguidor_id, seguido_id) DO NOTHING;
             """, [seguidor_id, seguido_id])
             conn.commit()
+
+            Notification.criar_notificacao(seguido_id, "follow", seguidor_id)
             return {"mensagem": "Agora você está seguindo esse usuário."}
         except Exception as e:
             return {"erro": str(e)}

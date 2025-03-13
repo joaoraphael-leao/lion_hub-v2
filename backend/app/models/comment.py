@@ -2,6 +2,7 @@ from app.models.basemodel import BaseModel
 from app.database import get_db_connection
 
 class Comment(BaseModel):
+    __tabela = "comments"
 
     def __init__(self, post_id, autor_id, conteudo, id=None):
         super().__init__()
@@ -10,88 +11,75 @@ class Comment(BaseModel):
         self.__autor_id = autor_id
         self.__conteudo = conteudo
 
-    @property
-    def post_id(self):
-        return self.__post_id
-        
-
-
-    @property
-    def autor_id(self):
-        return self.__autor_id
-
-    @property
-    def conteudo(self):
-        return self.__conteudo
-
-    def salvar_no_banco(self):
-        """Salva um novo comentário no banco de dados."""
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        cur.execute("""
-            INSERT INTO comments (post_id, autor_id, conteudo)
-            VALUES (%s, %s, %s) RETURNING id;
-        """, [self.post_id, self.autor_id, self.conteudo])
-
-        self.id = cur.fetchone()[0]
-        conn.commit()
-        cur.close()
-        conn.close()
-
-    def atualizar_comentario(self, novo_conteudo):
-        """Edita um comentário, garantindo que apenas o autor possa alterá-lo."""
-        self.__conteudo = novo_conteudo
-        self.atualizar_dados(conteudo=novo_conteudo)
-
-    @staticmethod
-    def deletar_comentario(comment_id, autor_id):
-        """Permite que apenas o autor do comentário o exclua."""
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        # Verifica se o usuário é o autor do comentário
-        cur.execute("""
-            SELECT autor_id FROM comments WHERE id = %s;
-        """, [comment_id])
-        resultado = cur.fetchone()
-
-        if not resultado:
-            return {"erro": "Comentário não encontrado."}
-        if resultado[0] != autor_id:
-            return {"erro": "Você não tem permissão para excluir este comentário."}
-
-        cur.execute("""
-            DELETE FROM comments WHERE id = %s;
-        """, [comment_id])
-        conn.commit()
-
-        cur.close()
-        conn.close()
-        return {"mensagem": "Comentário excluído com sucesso."}
-
     @staticmethod
     def buscar_por_post(post_id):
-        """Busca todos os comentários de um post específico."""
         conn = get_db_connection()
         cur = conn.cursor()
 
         cur.execute("""
-            SELECT id, autor_id, conteudo, data_criacao FROM comments
-            WHERE post_id = %s ORDER BY data_criacao ASC;
+            SELECT comments.id, comments.autor_id, users.nome, comments.conteudo, comments.data_criacao 
+            FROM comments
+            JOIN users ON comments.autor_id = users.id
+            WHERE comments.post_id = %s ORDER BY comments.data_criacao ASC;
         """, [post_id])
 
         comentarios = cur.fetchall()
         cur.close()
         conn.close()
 
-        return [{"id": c[0], "autor_id": c[1], "conteudo": c[2], "data": c[3]} for c in comentarios]
+        return [{"id": c[0], "autor_id": c[1], "autor_nome": c[2], "conteudo": c[3], "data": c[4]} for c in comentarios]
+
+    @staticmethod
+    def deletar_comentario(comentario_id, autor_id):
+        """
+        Deleta o comentário com o ID informado, verificando se o autor
+        do comentário é o mesmo que está solicitando a deleção.
+        Retorna um dicionário com uma mensagem de sucesso ou com um erro.
+        """
+        try:
+            # Busca os dados do comentário (usando o método herdado da BaseModel)
+            comment_data = Comment.buscar_por_id(comentario_id)
+            if not comment_data:
+                return {"erro": "Comentário não encontrado"}
+            # Verifica se o autor do comentário é o mesmo que solicitou a deleção
+            if comment_data["autor_id"] != autor_id:
+                return {"erro": "Você não tem permissão para deletar este comentário."}
+            # Cria uma instância do comentário para chamar o método de deleção
+            instance = Comment(
+                comment_data["post_id"],
+                comment_data["autor_id"],
+                comment_data["conteudo"],
+                id=comment_data["id"]
+            )
+            instance.deletar_do_banco(tabela="comments")
+            return {"mensagem": "Comentário deletado com sucesso"}
+        except Exception as e:
+            return {"erro": f"Erro ao deletar comentário: {str(e)}"}
+
+    def salvar_no_banco(self):
+        """
+        Salva o comentário no banco de dados.
+        Insere os valores de post_id, autor_id e conteudo na tabela e atualiza o atributo id com o valor gerado.
+        """
+        conn = get_db_connection()
+        cur = conn.cursor()
+        # Insere o comentário e retorna o id gerado
+        cur.execute(
+            f"INSERT INTO {Comment.__tabela} (post_id, autor_id, conteudo) VALUES (%s, %s, %s) RETURNING id;",
+            (self.__post_id, self.__autor_id, self.__conteudo)
+        )
+        self.id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        conn.close()
 
     def exibir_info(self):
-        """Exibe detalhes do comentário."""
+        """
+        Retorna um dicionário com as informações do comentário.
+        """
         return {
             "id": self.id,
-            "post_id": self.post_id,
-            "autor_id": self.autor_id,
-            "conteudo": self.conteudo
+            "post_id": self.__post_id,
+            "autor_id": self.__autor_id,
+            "conteudo": self.__conteudo
         }
