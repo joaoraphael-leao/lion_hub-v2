@@ -1,165 +1,196 @@
-# Social Network
+📌 Lion Hub - Rede Social Interativa no Terminal
 
-Este projeto é uma simulação de uma rede social onde os usuários podem:
+O Lion Hub é um sistema de rede social interativa baseado em menus no terminal. Ele permite que os usuários criem contas, publiquem posts, interajam com outros usuários, enviem mensagens privadas, sigam perfis e muito mais, tudo sem a necessidade de uma interface gráfica.
 
-- Criar contas e fazer login.
-- Criar, editar e excluir posts (com suporte para imagem e vídeo).
-- Curtir e comentar posts.
-- Criar eventos e convidar participantes.
-- Criar e gerenciar grupos.
-- Seguir outros usuários e enviar mensagens.
-- Receber notificações sobre interações (curtidas, comentários, solicitações de seguir, etc).
+⸻
 
-O projeto foi estruturado de forma modular, dividindo o código em:
+🌜 Funcionalidades Implementadas
 
-- **models**: Definição das classes e seus atributos/métodos.
-- **controllers**: Regras de negócio e manipulação dos modelos.
-- **views**: Interface interativa (menus) para o usuário.
-- **storage.py**: Armazenamento simples utilizando listas globais.
-- **tests**: Suíte de testes automatizados utilizando pytest para validar as funcionalidades.
+O projeto foi desenvolvido para cobrir diversas funcionalidades essenciais de uma rede social. Abaixo está um comparativo entre as funcionalidades inicialmente desejadas e o que foi implementado:
 
----
-### Requisitos
+✅ Funcionalidades Concluídas:
 
-- Python 3.7 ou superior.
+✔ Gerenciamento de Contas de Usuário:
+	•	Registro e login de usuários
+	•	Atualização de nome e senha
+	•	Exibição do perfil do usuário
+	•	Configurações de privacidade
 
-## Tutorial de Como Executar
-- vá ao diretório principal do arquivo
-- rode main.py
-- divirta-se
+✔ Criação e Gerenciamento de Posts:
+	•	Criar, editar e excluir posts
+	•	Suporte a textos, imagens e vídeos
+	•	Listagem e exibição de posts
+
+✔ Sistema de Seguidores:
+	•	Seguir e deixar de seguir usuários
+	•	Aceitar ou recusar solicitações de seguidores
+	•	Listar seguidores e seguidos
+
+✔ Mensagens Privadas:
+	•	Enviar e receber mensagens privadas
+	•	Visualizar histórico de conversas
+	•	Marcar mensagens como lidas
+	•	Excluir mensagens
+
+✔ Criação e Gerenciamento de Grupos:
+	•	Criar e excluir grupos
+	•	Editar informações do grupo
+	•	Gerenciar privacidade do grupo
+
+✔ Sistema de Notificações:
+	•	Notificações para curtidas, comentários, novos seguidores, etc.
+	•	Marcar notificações como lidas
+	•	Excluir notificações
+
+✔ Gerenciamento de Curtidas e Comentários:
+	•	Curtir e descurtir posts
+	•	Criar e excluir comentários em posts
+
+✔ Criação e Gerenciamento de Eventos:
+	•	Criar, editar e excluir eventos
+	•	Visualizar detalhes de eventos
+	•	Configurar eventos como públicos ou privados
+
+⸻
+
+❌ Funcionalidades Não Implementadas e Justificativas:
+
+✖ Moderação e Filtros de Conteúdo:
+	•	A moderação automática de conteúdo não foi implementada devido à ausência de um sistema avançado de análise de texto e IA. Geralmente em redes sociais, a quebra de diretrizes para casos graves ocorre de maneira manual, como houve com o X e Instagram.
+
+⸻
+
+🛠 Como Executar o Projeto
+
+1️⃣ Configurar o Ambiente
+	•	Certifique-se de ter o Python 3.10+ instalado
+	•	Instale as dependências necessárias:
+
+pip install -r requirements.txt
 
 
-# Descrição das Classes
 
-## 1. Classe User (em `models/user.py`)
+2️⃣ Configurar o Banco de Dados
+	•	Certifique-se de ter o PostgreSQL instalado e rodando
+	•	Crie um banco de dados chamado social_network
+	•	Execute o seguinte script SQL no pgAdmin para criar as tabelas:
 
-### Atributos:
-- **`_name`**: Nome do usuário.
-- **`_email`**: Email do usuário.
-- **`_password`**: Senha do usuário.
-- **`_id`**: Identificador único do usuário (atribuído automaticamente com base na quantidade de usuários cadastrados).
-- **`_notifications`**: Lista de notificações recebidas pelo usuário.
-- **`_followingList`**: Lista de usuários que este usuário segue.
-- **`_followersList`**: Lista de usuários que seguem este usuário.
-- **`_privacity`**: Booleano que indica se o perfil é privado (`True`) ou público (`False`).
-- **`_active`**: Booleano que indica se a conta está ativa (`True`) ou desativada (`False`).
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    senha VARCHAR(255) NOT NULL,
+    privacidade BOOLEAN DEFAULT TRUE
+);
 
-### Métodos:
-- **`__init__(self, name, email, password, privacity)`**:  
-  Inicializa os atributos do usuário.
-- **`__str__(self)`**:  
-  Retorna uma string representativa do usuário (ex.: "Nome - Email").
-- **`getName(self)` / `setName(self, name)`**:  
-  Obtém e atualiza o nome do usuário.
-- **`getEmail(self)` / `setEmail(self, email)`**:  
-  Obtém e atualiza o email do usuário.
-- **`getPassword(self)` / `setPassword(self, password)`**:  
-  Obtém e atualiza a senha.
-- **`getId(self)`**:  
-  Retorna o identificador único do usuário.
-- **`isActive(self)`**:  
-  Retorna `True` se a conta estiver ativa; caso contrário, `False`.
-- **`addNotification(self, notification)`**:  
-  Adiciona uma notificação à lista.
-- **`getNotifications(self)`**:  
-  Retorna a lista de notificações.
-- **`follow(self, other_user)`**:  
-  Adiciona outro usuário à lista de seguidos e atualiza a lista de seguidores do outro.
-- **`getFollowingList(self)` / `getFollowersList(self)`**:  
-  Retorna as listas de usuários seguidos e seguidores.
-- **`deleteAccount(self)`**:  
-  Desativa a conta do usuário e limpa os dados associados.
+CREATE TABLE posts (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    titulo VARCHAR(255) NOT NULL,
+    descricao TEXT NOT NULL,
+    midia TEXT,
+    data_criacao TIMESTAMP DEFAULT NOW()
+);
 
----
+CREATE TABLE comments (
+    id SERIAL PRIMARY KEY,
+    post_id INT REFERENCES posts(id) ON DELETE CASCADE,
+    autor_id INT REFERENCES users(id) ON DELETE CASCADE,
+    conteudo TEXT NOT NULL,
+    data_criacao TIMESTAMP DEFAULT NOW()
+);
 
-## 2. Classe Post (em `models/post.py`)
+CREATE TABLE likes (
+    id SERIAL PRIMARY KEY,
+    usuario_id INT REFERENCES users(id) ON DELETE CASCADE,
+    post_id INT REFERENCES posts(id) ON DELETE CASCADE
+);
 
-### Atributos:
-- **`_title`**: Título do post.
-- **`_content`**: Conteúdo do post.
-- **`_author`**: Usuário que criou o post.
-- **`_likes`**: Número de curtidas que o post recebeu.
-- **`_comments`**: Lista de comentários do post.
-- **`_id`**: Identificador único do post (atribuído automaticamente).
-- **`_image`**: URL da imagem associada ao post (opcional).
-- **`_video`**: URL do vídeo associado ao post (opcional).
+CREATE TABLE followers (
+    id SERIAL PRIMARY KEY,
+    seguidor_id INT REFERENCES users(id) ON DELETE CASCADE,
+    seguido_id INT REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(seguidor_id, seguido_id)
+);
 
-### Métodos:
-- **`__init__(self, title, content, author)`**:  
-  Inicializa o post com título, conteúdo e autor.
-- **`getId(self)`**:  
-  Retorna o identificador único do post.
-- **`getTitle(self)` / `setTitle(self, title)`**:  
-  Obtém e atualiza o título do post.
-- **`getContent(self)` / `setContent(self, content)`**:  
-  Obtém e atualiza o conteúdo do post.
-- **`getAuthor(self)`**:  
-  Retorna o autor do post.
-- **`getLikes(self)` / `like(self)`**:  
-  Obtém o número de curtidas e incrementa a contagem de curtidas.
-- **`getComments(self)` / `addComment(self, comment)`**:  
-  Obtém a lista de comentários e adiciona um novo comentário.
-- **`setImage(self, image_url)` / `getImage(self)`**:  
-  Define e obtém a URL da imagem.
-- **`setVideo(self, video_url)` / `getVideo(self)`**:  
-  Define e obtém a URL do vídeo.
-- **`__str__(self)`**:  
-  Retorna uma string representativa do post, incluindo autor, título, conteúdo e número de curtidas.
+CREATE TABLE follow_requests (
+    id SERIAL PRIMARY KEY,
+    seguidor_id INT REFERENCES users(id) ON DELETE CASCADE,
+    seguido_id INT REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(seguidor_id, seguido_id)
+);
 
----
+CREATE TABLE messages (
+    id SERIAL PRIMARY KEY,
+    remetente_id INT REFERENCES users(id) ON DELETE CASCADE,
+    destinatario_id INT REFERENCES users(id) ON DELETE CASCADE,
+    conteudo TEXT NOT NULL,
+    lida BOOLEAN DEFAULT FALSE,
+    data_criacao TIMESTAMP DEFAULT NOW()
+);
 
-## 3. Classe Event (em `models/event.py`)
+CREATE TABLE notifications (
+    id SERIAL PRIMARY KEY,
+    usuario_id INT REFERENCES users(id) ON DELETE CASCADE,
+    tipo VARCHAR(50) NOT NULL,
+    objeto_id INT NOT NULL,
+    lida BOOLEAN DEFAULT FALSE,
+    data_criacao TIMESTAMP DEFAULT NOW()
+);
 
-### Atributos:
-- **`_event_name`**: Nome do evento.
-- **`_event_date`**: Data do evento.
-- **`_event_location`**: Local onde o evento ocorrerá.
-- **`_event_description`**: Descrição do evento.
-- **`_participants`**: Lista de participantes inscritos no evento.
-- **`_id`**: Identificador único do evento (atribuído automaticamente).
+CREATE TABLE groups (
+    id SERIAL PRIMARY KEY,
+    owner_id INT REFERENCES users(id) ON DELETE CASCADE,
+    nome VARCHAR(255) NOT NULL,
+    descricao TEXT NOT NULL,
+    privacidade BOOLEAN DEFAULT TRUE
+);
 
-### Métodos:
-- **`__init__(self, event_name, event_date, event_location, event_description)`**:  
-  Inicializa o evento com os dados fornecidos.
-- **`__str__(self)`**:  
-  Retorna uma string com os detalhes do evento (nome, data, local e descrição).
-- **`getId(self)`**:  
-  Retorna o identificador único do evento.
-- **`getEventName(self)`**:  
-  Retorna o nome do evento.
-- **`getEventDate(self)`**:  
-  Retorna a data do evento.
-- **`getParticipants(self)`**:  
-  Retorna a lista de participantes.
-- **`addParticipant(self, user)`**:  
-  Adiciona um usuário à lista de participantes, se ele ainda não estiver inscrito.
+CREATE TABLE events (
+    id SERIAL PRIMARY KEY,
+    owner_id INT REFERENCES users(id) ON DELETE CASCADE,
+    nome VARCHAR(255) NOT NULL,
+    descricao TEXT NOT NULL,
+    data DATE NOT NULL,
+    localizacao TEXT NOT NULL,
+    privacidade BOOLEAN DEFAULT TRUE
+);
 
----
 
-## 4. Classe Group (em `models/group.py`)
+3️⃣ Executar o Sistema
+	•	Para iniciar o menu interativo, basta rodar:
+pip install psycopg2
+cd backend
+python main.py
 
-### Atributos:
-- **`_name`**: Nome do grupo.
-- **`_description`**: Descrição do grupo.
-- **`_founder`**: Usuário que fundou o grupo.
-- **`_members`**: Lista de membros do grupo (inicia com o fundador).
-- **`_posts`**: Lista de posts compartilhados no grupo.
-- **`_messages`**: Lista de mensagens trocadas no grupo.
 
-### Métodos:
-- **`__init__(self, name, description, founder)`**:  
-  Inicializa o grupo, adicionando o fundador como primeiro membro.
-- **`__str__(self)`**:  
-  Retorna uma string representativa do grupo (ex.: "Nome do Grupo - X Participantes").
-- **`getName(self)`**:  
-  Retorna o nome do grupo.
-- **`getDescription(self)`**:  
-  Retorna a descrição do grupo.
-- **`getFounder(self)`**:  
-  Retorna o usuário fundador do grupo.
-- **`getMembers(self)`**:  
-  Retorna a lista de membros do grupo.
-- **`addMember(self, member)`**:  
-  Adiciona um novo membro ao grupo, caso ele não esteja presente.
-- **`removeMember(self, member)`**:  
-  Remove um membro do grupo, desde que ele não seja o fundador.
+
+⸻
+
+🏢 Estrutura do Projeto
+
+lion_hub/
+️│── app/
+️│   ├── models/         # Modelos das entidades (User, Post, Comment, etc.)
+️│   ├── database.py     # Conexão com o banco de dados
+️│   └── main.py         # Menu principal do sistema
+️│── README.md           # Documentação do projeto
+
+
+
+⸻
+
+📚 Pilares da Programação Orientada a Objetos
+
+🔒 Encapsulamento
+	•	Os atributos das classes estão encapsulados usando atributos privados (__atributo).
+	•	A classe User protege senhas armazenadas usando hashing.
+
+📚 Herança
+	•	BaseModel serve como classe base para todas as entidades do sistema.
+	•	Post, Comment, Like, Message, Notification, Group e Event herdam BaseModel.
+
+🎨 Abstração
+	•	BaseModel é uma classe abstrata que define um modelo padrão para outras classes.
+
+⸻
