@@ -159,9 +159,9 @@ CREATE TABLE events (
 
 3️⃣ Executar o Sistema
 	•	Para iniciar o menu interativo, basta rodar:
-  pip install psycopg2
-  cd backend
-  python main.py
+  •	pip install psycopg2
+  •	cd backend
+  •	python main.py
 
 
 
