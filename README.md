@@ -66,7 +66,7 @@ O projeto foi desenvolvido para cobrir diversas funcionalidades essenciais de um
 	•	Certifique-se de ter o Python 3.10+ instalado
 	•	Instale as dependências necessárias:
 
-pip install -r requirements.txt
+pip install psycopg2
 
 
 
